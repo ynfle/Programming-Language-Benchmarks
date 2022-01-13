@@ -48,7 +48,7 @@ environments:
     include: nim
     include_sub_dir:
     before_build:
-    build: nimble build app -y -x:off -a:off -d:release -d:danger -d:nimCoroutines --threads:on --opt:speed --verbose
+    build: nimble build app -y -x:off -a:off -d:release -d:danger -d:nimCoroutines --threads:on --opt:speed --verbose --gc:arc
     after_build:
       - cp app out
     out_dir: out
