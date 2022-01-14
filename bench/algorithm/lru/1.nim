@@ -1,31 +1,28 @@
-import os, strutils, tables
-
-const A:uint32=1103515245
-const C:uint32=12345
-const M:uint32=1 shl 31
-
-proc lcg(seed: uint32): iterator (): uint32 =
-  result = iterator (): uint32 =
-    var x = seed
-    while true:
-      x = (A*x+C) mod M
-      yield x
+import std/[os, strutils, tables]
 
 type
   LRU = object
     size: int
     tbl : OrderedTableRef[uint32, uint32]
 
-method get(lru: LRU, key:uint32):(uint32,bool) =
+const 
+  A: uint32 = 1103515245
+  C: uint32 = 12345
+  M: uint32 = 1 shl 31
+
+proc lcg(seed: uint32): uint32 =
+      (A*seed+C) mod M
+
+proc get(lru: LRU, key: uint32): bool =
   if lru.tbl.contains(key):
     let v = lru.tbl[key]
     lru.tbl.del(key)
     lru.tbl[key] = v
-    (v, true)
+    true
   else:
-    (uint32(0), false)
+    false
 
-method put(lru: LRU, key:uint32, value:uint32) =
+proc put(lru: LRU, key: uint32, value: uint32) =
   if lru.tbl.contains(key):
     let v = lru.tbl[key]
     lru.tbl.del(key)
@@ -36,23 +33,27 @@ method put(lru: LRU, key:uint32, value:uint32) =
       break
   lru.tbl[key] = value
 
-let n =  if paramCount() > 0: parseInt(paramStr(1)) else: 100
+proc main() =
+  let n = if paramCount() > 0: parseInt(paramStr(1)) else: 100
 
-let lru = LRU(size:10, tbl: newOrderedTable[uint32, uint32](10))
-let rng0 = lcg(0)
-let rng1 = lcg(1)
+  let lru = LRU(size:10, tbl: newOrderedTable[uint32, uint32](10))
 
-var hit = 0
-var missed = 0
+  var
+    hit = 0
+    missed = 0
+    n0 = uint32(0)
+    n1 = uint32(1)
 
-for i in 0..<n:
-    let n0 = rng0() mod 100
-    lru.put(n0, n0)
-    let n1 = rng1() mod 100
-    let (_, ok) = lru.get(n1)
-    if ok:
-      inc hit 
-    else:
-      inc missed
-echo hit
-echo missed
+  for i in 0..<n:
+      n0 = lcg(n0)
+      lru.put(n0 mod 100, n0 mod 100)
+      n1 = lcg(n1)
+      if lru.get(n1 mod 100):
+        inc hit
+      else:
+        inc missed
+  echo hit
+  echo missed
+
+when isMainModule:
+  main()
